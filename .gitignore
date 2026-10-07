@@ -5,3 +5,4 @@
 tests/output/
 *_files/
 /*.pdf
+rsconnect/
