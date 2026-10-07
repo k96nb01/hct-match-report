@@ -1,7 +1,7 @@
 # Runs the report's matching logic on every synthetic case in tests/cases.R
-# and checks the match grades and the DPB1 cell against the expected values,
-# without rendering a PDF. Calls the live matching API, and the DPB1 TCE
-# service for DPB1 mismatches.
+# and checks the X/10 and X/8 match grades and the Mismatches cells against the
+# expected values, without rendering a PDF. Calls the live matching API, and the
+# DPB1 TCE service for DPB1 mismatches.
 #
 # Run from the project root:   Rscript tests/check_cases.R
 # Add --pdf to also render one PDF per case into tests/output/, and --verbose
@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
 })
 source("R/matching_api_client.R")
 source("R/hct_match.R")
+source("R/examples.R")
 source("tests/cases.R")
 options(width = 200)
 
@@ -47,7 +48,7 @@ for (b in bad_inputs) {
   if (!ok) cat("FAIL read_typing: expected \"", b$error, "\", got \"", message, "\"\n", sep = "")
 }
 
-# A typing by locus and the GL string typing_gl() makes from it must read the
+# A typing by locus and the GL String typing_gl() makes from it must read the
 # same; loci the report does not compare are kept and listed as ignored.
 by_locus <- read_typing(list(a = c("A*02:01", " 24:02 "), `HLA-B` = "07:02", DRB3 = "01:01", DPB1 = c("", NA)))
 as_gl    <- typing_gl(by_locus)
@@ -60,26 +61,40 @@ failures <- failures + !round_trip
 cat("Typing checks done (", length(bad_inputs) + 1, " checks).\n", sep = "")
 
 for (i in seq_along(cases)) {
-  case  <- cases[[i]]
-  match <- hct_match(case$recipient, case$donor)
+  case      <- cases[[i]]
+  direction <- case$direction %||% "bidirectional"
+  scope     <- case$scope %||% "locus"
+  match     <- hct_match(case$recipient, case$donor, direction = direction, scope = scope)
 
-  # The DPB1 cell as the Mismatches line prints it.
-  dpb1  <- match$loci |> filter(locus == "HLA-DPB1")
-  dpb1_cell <- case_when(!dpb1$comparable ~ "NC", !is.na(dpb1$error) ~ "ERR",
-                         dpb1$MM == 0 ~ "", .default = coalesce(match$tce$label, "ERR"))
+  # Every cell of the Mismatches line as the report prints it, named by locus
+  # without the prefix (e.g. "DPB1").
+  cells <- match$loci |>
+    mutate(cell = case_when(!comparable ~ "NC", !is.na(error) ~ "ERR", MM == 0 ~ "",
+                            locus == "HLA-DPB1" ~ coalesce(match$tce$label, "ERR"),
+                            .default = as.character(MM)),
+           locus = str_remove(locus, "^HLA-")) |>
+    select(locus, cell) |>
+    deframe()
+  expected_cells <- c(DPB1 = case$dpb1, case$mm)
 
-  ok <- same(match$grade, case$grade) && same(match$grade_two_field, case$grade_two_field) &&
-    dpb1_cell == case$dpb1
+  g10 <- match$grades$Xof10
+  g8  <- match$grades$Xof8
+  ok <- same(g10$grade, case$grade) && same(g10$two_field, case$grade_two_field) &&
+    same(g8$grade, case$grade8) && same(g8$two_field, case$grade8_two_field) &&
+    identical(unname(cells[names(expected_cells)]), unname(expected_cells))
   failures <- failures + !ok
 
-  cat("\n=== ", i, ". ", case$name, ": ", if (ok) "PASS" else "FAIL", "\n", sep = "")
-  cat("Grade ", match$grade, "/10 (expected ", case$grade, "); two-field ", match$grade_two_field,
-      "/10 (expected ", case$grade_two_field, "); DPB1 \"", dpb1_cell, "\" (expected \"", case$dpb1, "\")\n",
-      sep = "")
+  cat("\n=== ", i, ". ", case$name, " (", direction, ", ", scope, "): ", if (ok) "PASS" else "FAIL", "\n", sep = "")
+  cat("X/10 ", g10$grade, " (expected ", case$grade, "), two-field ", g10$two_field,
+      " (expected ", case$grade_two_field, "); X/8 ", g8$grade, " (expected ", case$grade8,
+      "), two-field ", g8$two_field, " (expected ", case$grade8_two_field, ")\n", sep = "")
+  cat("Mismatches: ", str_flatten(str_c(names(cells), "=\"", cells, "\""), " "), "\n", sep = "")
+  if (!ok) cat("Expected:   ", str_flatten(str_c(names(expected_cells), "=\"", expected_cells, "\""), " "), "\n", sep = "")
   cat(str_c(" - ", str_wrap(hct_comments(match), 150, exdent = 3)), sep = "\n")
 
   if (render) {
     hct_match_report(case$recipient, case$donor, file = sprintf("tests/output/case_%02d.pdf", i),
+                     direction = direction, scope = scope,
                      recipient_label = "Synthetic recipient", donor_label = str_c("Synthetic donor: ", case$name),
                      quiet = !verbose)
   }

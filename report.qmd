@@ -8,15 +8,19 @@ format:
 execute:
   echo: false
 params:
-  # The two typings, as GL strings (hct_match_report() converts a typing given
+  # The two typings, as GL Strings (hct_match_report() converts a typing given
   # by locus). Nothing here identifies a person.
   recipient: "HLA-A*02:01+HLA-A*24:02^HLA-B*07:02+HLA-B*44:02^HLA-C*07:02+HLA-C*05:01^HLA-DRB1*15:01+HLA-DRB1*04:01^HLA-DQB1*06:02+HLA-DQB1*03:02^HLA-DPB1*04:01+HLA-DPB1*02:01"
   donor: "HLA-A*02:09+HLA-A*24:02^HLA-B*07:02+HLA-B*44:02^HLA-C*07:50+HLA-C*05:01^HLA-DRB1*15:01+HLA-DRB1*04:01^HLA-DQB1*06:02+HLA-DQB1*03:02^HLA-DPB1*04:01+HLA-DPB1*02:01"
   # Printed on the report only; never sent to either service.
   recipient_label: "Recipient"
   donor_label: "Donor"
+  # Match direction ("bidirectional", "GvH", or "HvG") and, for bidirectional,
+  # scope ("locus" or "genotype"). See R/hct_match.R.
+  direction: "bidirectional"
+  scope: "locus"
   api_host: "https://api.immunogenetr.org"
-  report_version: "0.1.0"
+  report_version: "0.2.0"
 ---
 
 ```{r setup, include=FALSE}
@@ -52,13 +56,13 @@ typst_text <- function(x) str_replace_all(replace_na(x, ""), "([\\\\#$*_`<>@\\[\
 
 ```{r matching, include=FALSE}
 # All of the matching: per-locus mismatch counts, DPB1 permissiveness, and the
-# X/10 match grade. See R/hct_match.R. Quarto reports a failed chunk only as
+# X/10 and X/8 match grades. See R/hct_match.R. Quarto reports a failed chunk only as
 # "error running quarto", so save the real reason where hct_match_report() can
 # find it and show it.
 tryCatch({
   recipient <- read_typing(params$recipient)
   donor     <- read_typing(params$donor)
-  match     <- hct_match(recipient, donor, params$api_host)
+  match     <- hct_match(recipient, donor, params$api_host, params$direction, params$scope)
 }, error = \(e) {
   writeLines(conditionMessage(e), "render_error.txt")
   stop(e)
@@ -81,18 +85,15 @@ typing_rows <- function(typing, label) {
     x <- typing$alleles[[locus]][i]
     if (is.na(x)) "" else str_replace(x, "^([^:]+:[^:]+:)", "\\1\u200b")
   }
-  tibble(Case = c(label, ""),
-         A    = c(cell("HLA-A", 1), cell("HLA-A", 2)),
-         B    = c(cell("HLA-B", 1), cell("HLA-B", 2)),
-         C    = c(cell("HLA-C", 1), cell("HLA-C", 2)),
-         DRB1 = c(cell("HLA-DRB1", 1), cell("HLA-DRB1", 2)),
-         DQB1 = c(cell("HLA-DQB1", 1), cell("HLA-DQB1", 2)),
-         DPB1 = c(cell("HLA-DPB1", 1), cell("HLA-DPB1", 2)))
+  map(set_names(report_loci, str_remove(report_loci, "^HLA-")),
+      \(l) c(cell(l, 1), cell(l, 2))) |>
+    as_tibble() |>
+    add_column(Case = c(label, ""), .before = 1)
 }
 
 # One row of mismatch results. Only mismatches appear; a matched locus is left
 # blank.
-#   A, B, C, DRB1, DQB1: 1 or 2, the bidirectional count at the P group level.
+#   A to DPA1: 1 or 2, the count in the chosen direction at the P group level.
 #   DPB1: P (permissive) or NP (non-permissive) by TCE group.
 #   NC  - not compared (typing missing or not high resolution; see comments)
 #   ERR - could not be compared (see comments)
@@ -112,9 +113,11 @@ mismatch_row <- function() {
     cell[["HLA-DPB1"]] <- if (is.na(match$tce$label)) "ERR" else match$tce$label
   }
 
-  tibble(Case = "Mismatches",
-         A = cell[["HLA-A"]], B = cell[["HLA-B"]], C = cell[["HLA-C"]],
-         DRB1 = cell[["HLA-DRB1"]], DQB1 = cell[["HLA-DQB1"]], DPB1 = cell[["HLA-DPB1"]])
+  cell[report_loci] |>
+    set_names(str_remove(report_loci, "^HLA-")) |>
+    as.list() |>
+    as_tibble() |>
+    add_column(Case = "Mismatches", .before = 1)
 }
 
 typing_data <- bind_rows(
@@ -125,7 +128,23 @@ typing_data <- bind_rows(
 
 # The reason for a missing grade is in the comments, not on this line: this
 # line goes into a raw Typst block, where an API message could break the compile.
-match_grade_text <- if (is.na(match$grade)) "Not calculated (see comments)" else str_c(match$grade, "/10")
+grade_text <- function(match_grade) {
+  g      <- match$grades[[match_grade]]$grade
+  out_of <- grade_out_of[[match_grade]]
+  str_c(if (is.na(g)) str_c("X/", out_of, " not calculated") else str_c(g, "/", out_of),
+        " (", str_flatten_comma(str_remove(grade_loci[[match_grade]], "^HLA-")), ")")
+}
+grades_text <- str_c(str_flatten(map_chr(names(grade_loci), grade_text), "; "),
+                     if (any(map_lgl(match$grades, \(g) is.na(g$grade)))) "; see comments" else "")
+
+# The matching options in words, for the note under the table and the grades.
+direction_text <- switch(match$direction,
+  bidirectional = "Bidirectional",
+  GvH           = "Graft-versus-host (GvH)",
+  HvG           = "Host-versus-graft (HvG)")
+scope_text <- if (match$direction != "bidirectional") "" else switch(match$scope,
+  locus    = " Scope: locus (the worse direction at each locus, added up).",
+  genotype = " Scope: genotype (the worse of the GvH and HvG totals).")
 ```
 
 ```{=typst}
@@ -153,9 +172,9 @@ colnames(typing_data)[1] <- ""
 
 # format_tt(escape = TRUE) escapes Typst special characters in the cells, so an
 # unexpected character in a label or allele name cannot stop the compile.
-tt(typing_data, width = c(.22, rep(.13, 6))) |>
+tt(typing_data, width = c(.13, rep(.87 / 8, 8))) |>
   format_tt(escape = TRUE) |>
-  style_tt(j = 1:7, align = "l", fontsize = 0.95) |>
+  style_tt(j = 1:9, align = "l", fontsize = 0.9) |>
   style_tt(i = 0, line = "b", line_color = "black", line_width = 0.1) |>
   style_tt(i = c(2, 4), line = "b", line_color = "black", line_width = 0.1) |>
   style_tt(i = 5, bold = TRUE) |>
@@ -163,16 +182,18 @@ tt(typing_data, width = c(.22, rep(.13, 6))) |>
 ```
 
 ```{=typst}
-#text(9pt)[Bidirectional mismatch counts are calculated for A, B, C, DRB1, and DQB1 after reduction of both typings to P groups. A homozygous mismatch counts as 2. A DPB1 mismatch is shown as P (permissive) or NP (non-permissive) by T-cell epitope group. A matched locus is left blank. NC: not compared. ERR: could not be compared.]
+#text(9pt)[`r direction_text` mismatch counts are calculated for A, B, C, DRB1, DQA1, DQB1, and DPA1 after reduction of both typings to P groups. A homozygous mismatch counts as 2. A DPB1 mismatch is shown as P (permissive) or NP (non-permissive) by T-cell epitope group. A matched locus is left blank. NC: not compared. ERR: could not be compared.]
 #v(10pt)
-#text(12pt)[*HLA match grade (A, B, C, DRB1, DQB1; P group level): `r match_grade_text`*]
+#text(12pt)[*HLA match grade, P group level: `r grades_text`*]
+#v(2pt)
+#text(9pt)[Direction: `r direction_text`.`r scope_text` DQA1, DPA1, and DPB1 are not part of either grade.]
 #v(8pt)
 #text(10pt)[*Genotypes matched* (after py-ard reduction to P groups; loci marked NC or ERR are not included)]
 ```
 
 ```{r reduced genotypes}
 # What was actually matched: each person's genotype as py-ard reduced it, as a
-# GL string. A GL string has no spaces, so a zero-width space (U+200B) after
+# GL String. A GL String has no spaces, so a zero-width space (U+200B) after
 # each "^" and "+" lets Typst wrap it; it prints as nothing.
 reduced <- hct_reduced_gl(match)
 wrap_gl <- function(gl) if (is.na(gl)) "No locus was compared." else str_replace_all(gl, "([\\^+])", "\\1\u200b")
@@ -194,7 +215,7 @@ tibble(Person = c(params$recipient_label, params$donor_label),
 # names and API messages safe for Typst. tt() rejects a zero-row data frame, so
 # a report with nothing to say gets an explicit line saying that.
 tibble(Comment = if (length(comments) == 0) {
-  "P group reduction did not change any mismatch count or the match grade."
+  "P group reduction did not change any mismatch count or either match grade."
 } else {
   comments
 }) |>
@@ -206,7 +227,7 @@ tibble(Comment = if (length(comments) == 0) {
 
 ```{=typst}
 #v(8pt)
-#text(8pt)[Report version `r params$report_version`. Matching calculated by the immunogenetr matching API `r typst_text(match$versions$api)`, `r typst_text(match$versions$host)` (immunogenetr `r typst_text(match$versions$api_immunogenetr)`; P group reduction by py-ard `r typst_text(match$versions$py_ard)` with IPD-IMGT/HLA `r typst_text(ipd_imgt_hla_release)`). Two-field comparison for the comments calculated with immunogenetr `r typst_text(match$versions$local_immunogenetr)`. DPB1 permissiveness from the IPD-IMGT/HLA DPB1 T-cell epitope matching service, algorithm version `r dpb1_tce_version`.]
+#text(8pt)[Report version `r params$report_version`. Matching calculated by the immunogenetr matching API `r typst_text(match$versions$api)`, `r typst_text(match$versions$host)` (immunogenetr `r typst_text(match$versions$api_immunogenetr)`; P group reduction by py-ard `r typst_text(match$versions$py_ard)` with IPD-IMGT/HLA `r typst_text(ipd_imgt_hla_release)`). DPB1 permissiveness from the IPD-IMGT/HLA DPB1 T-cell epitope matching service, algorithm version `r dpb1_tce_version`.]
 #v(4pt)
 #text(8pt)[*For research use only.* Any clinical use requires independent validation according to local regulations.]
 ```

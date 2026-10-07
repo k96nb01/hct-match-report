@@ -8,9 +8,12 @@
 #     file      = "match_report.pdf"
 #   )
 #
-# Each typing is a GL string or a named list by locus (see read_typing() in
+# Each typing is a GL String or a named list by locus (see read_typing() in
 # R/hct_match.R). `recipient_label` and `donor_label` are printed on the report
-# only; they are never sent anywhere. `quiet = FALSE` shows Quarto's output.
+# only; they are never sent anywhere. `direction` is "bidirectional" (the
+# default), "GvH", or "HvG"; `scope`, which only affects a bidirectional match
+# grade, is "locus" (the default) or "genotype" (see R/hct_match.R).
+# `quiet = FALSE` shows Quarto's output.
 # Run from the project root. Needs the Quarto CLI and the R packages listed in
 # the README.
 
@@ -22,14 +25,18 @@ suppressPackageStartupMessages({
 
 hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
                              recipient_label = "Recipient", donor_label = "Donor",
+                             direction = c("bidirectional", "GvH", "HvG"),
+                             scope = c("locus", "genotype"),
                              api_host = "https://api.immunogenetr.org", quiet = TRUE) {
+  direction <- match.arg(direction)
+  scope     <- match.arg(scope)
   # The project root: where the R/ folder and report.qmd live.
   root <- normalizePath(".", winslash = "/")
   if (!file.exists(file.path(root, "report.qmd"))) {
     stop("Run hct_match_report() from the project root (the folder holding report.qmd).", call. = FALSE)
   }
 
-  # Both typings go to the report as GL strings. read_typing() checks each
+  # Both typings go to the report as GL Strings. read_typing() checks each
   # one, so a typing that cannot be used stops here, with its message, rather
   # than inside the render.
   source(file.path(root, "R", "matching_api_client.R"), local = TRUE)
@@ -41,6 +48,8 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
     donor           = as_gl(donor),
     recipient_label = recipient_label,
     donor_label     = donor_label,
+    direction       = direction,
+    scope           = scope,
     api_host        = api_host
   )
 
@@ -54,7 +63,7 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
 
   # Run the Quarto CLI directly, with its whole output kept in a log, so a
   # failed render can always say why. The parameters go in a YAML file, which
-  # avoids quoting GL strings on the command line.
+  # avoids quoting GL Strings on the command line.
   quarto_cli <- quarto::quarto_path()
   if (is.null(quarto_cli)) {
     stop("The Quarto CLI was not found. Install it from https://quarto.org (see the README).", call. = FALSE)
