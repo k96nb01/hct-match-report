@@ -1,18 +1,36 @@
 # Open work
 
-Status 2026-10-07: 0.2.0 in development (DQA1/DPA1, X/8 grade, direction and
-scope options, app examples). All 25 synthetic cases and the offline typing
-checks pass against the live API. Licensed MIT.
+Status 2026-10-09: 0.2.0 (DQA1/DPA1, X/8 grade, direction and scope options,
+app examples) is on `main`; NEWS still marks it "in development". All 25
+synthetic cases and the offline typing checks pass against the live API.
+Licensed MIT. Hosting is blocked: the Connect server has no Quarto (below).
 
 ## Next
 
 - **Host the app on a Posit Connect server, open to all** (decided
   2026-10-07). This repo stays the one public source and is deployed from
-  directly; deployment records (`rsconnect/`) are not committed. Before the
-  first deploy: add an renv lockfile. The Quarto CLI (with Typst) may not be
-  installed on the server; the first test deploy will tell. Also confirm the
-  server can reach `api.immunogenetr.org` and `www.ebi.ac.uk`. Then link the
-  hosted app from this README.
+  directly; deployment records (`rsconnect/`) are not committed.
+  - **First test deploy, 2026-10-09:** the app deployed to a staging Connect
+    server and starts, but **Generate report** fails with "The Quarto CLI was
+    not found." The server's Quarto settings
+    (`GET /__api__/v1/server_settings/quarto`) list no installations, so
+    Quarto (which includes Typst) is not installed there at all. A request to
+    the server administrators to install it went in on 2026-10-09, asking for
+    Posit's standard location, `/opt/quarto/<version>/bin/quarto`. Nothing
+    more can be tested until then.
+  - That deploy listed the app's files explicitly (`app.R`, `report.qmd`,
+    and the four files in `R/`) so `tests/` stays out of the bundle, and used
+    no renv lockfile; package versions came from the deploying library.
+  - **Once Quarto is installed:** make `report.R` find it without server-side
+    settings. When `quarto::quarto_path()` finds nothing, fall back to the
+    newest `/opt/quarto/*/bin/quarto`, and point Quarto at the running R
+    (`QUARTO_R` from `R.home("bin")`) so the render's R process is the same
+    R. A `QUARTO_PATH` set on the server would still win, as an override.
+    Then redeploy and render every example.
+  - Still to do: add an renv lockfile; confirm the server can reach
+    `api.immunogenetr.org` and `www.ebi.ac.uk` (not yet tested, because the
+    report stops before any request is made); then link the hosted app from
+    this README.
 
 ## Later
 
