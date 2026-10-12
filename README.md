@@ -45,12 +45,17 @@ anywhere. Do not put identifiers in the typing.
 ## Requirements
 
 - R (4.1 or later) with `tidyverse`, `httr2`, `immunogenetr`, `tinytable`
-  (tested with 0.18.0; the Typst output depends on a recent version),
-  `quarto`, `yaml`, `withr`, and, for the app, `shiny`:
+  (the Typst output depends on a recent version), `quarto`, `yaml`,
+  `withr`, and, for the app, `shiny`. The project uses
+  [renv](https://rstudio.github.io/renv/): opening it in R sets up a
+  project library, and
 
   ```r
-  install.packages(c("tidyverse", "httr2", "immunogenetr", "tinytable", "quarto", "yaml", "withr", "shiny"))
+  renv::restore()
   ```
+
+  installs the tested versions recorded in `renv.lock`. renv may warn that
+  the lockfile was made with a different R version; that is expected.
 
 - The [Quarto CLI](https://quarto.org/docs/get-started/) (1.4 or later), which
   renders the PDF through Typst.
@@ -174,6 +179,7 @@ Rscript tests/check_cases.R --pdf --verbose   # ... showing Quarto's output
 | `tests/` | Synthetic test cases and the script that checks them |
 | `fonts/` | The report's font, Liberation Sans, so the PDF looks the same on every machine |
 | `DEPLOY.md` | How to deploy the app to Posit Connect |
+| `renv.lock` | The package versions the app is tested and deployed with |
 
 See [`NEWS.md`](NEWS.md) for the version history and [`TODO.md`](TODO.md) for
 open work.
