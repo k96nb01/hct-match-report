@@ -1,19 +1,16 @@
 # Open work
 
-Status 2026-10-12: 0.2.0 is on `main`; NEWS still marks it "in development".
-All 25 synthetic cases and the offline typing checks pass against the live
-API, on the desktop and on Workbench. The app runs on the staging and
-production Connect servers; production is open to anyone.
+Status 2026-10-12: 0.2.0 is released and hosted at
+<https://hct-report.immunogenetr.org/> (the production Connect content,
+through a Cloudflare Worker that lives with the matching API's proxy, not in
+this public repo). All 25 synthetic cases and the offline typing checks
+pass against the live API, on the desktop and on Workbench.
 
 ## Next
 
-- **Serve the app at `hct-report.immunogenetr.org`**, through a Cloudflare
-  Worker in front of the production content, like the matching API's
-  `api.immunogenetr.org` (the Worker lives with the API's proxy, not in this
-  public repo). Then test the app through the new name, including from an
-  outside network.
-- **Release 0.2.0:** link the app (at its new address) from this README,
-  mark 0.2.0 released in NEWS, and tag it.
+- Finish the smoke test of the hosted app: leave it idle for more than 5
+  minutes and generate another report, and use it once from a phone on a
+  cellular network.
 - **Quarto for R content on the servers:** the server administrators are
   looking for a lasting way to let R content that runs Quarto itself find
   it: a stable location on the PATH Connect passes to content, or a program
