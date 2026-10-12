@@ -64,16 +64,21 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
   # Run the Quarto CLI directly, with its whole output kept in a log, so a
   # failed render can always say why. The parameters go in a YAML file, which
   # avoids quoting GL Strings on the command line.
-  quarto_cli <- quarto::quarto_path()
+  quarto_cli <- find_quarto_cli()
   if (is.null(quarto_cli)) {
     stop("The Quarto CLI was not found. Install it from https://quarto.org (see the README).", call. = FALSE)
   }
   yaml::write_yaml(params, file.path(work, "params.yml"))
   log <- file.path(work, "render.log")
-  status <- withr::with_dir(work, system2(
-    quarto_cli,
-    c("render", "report.qmd", "--to", "typst", "--execute-params", "params.yml"),
-    stdout = log, stderr = log))
+  # QUARTO_R makes the render's R process the R running this function, so the
+  # report sees the same R and package library (on a server, Rscript on the
+  # PATH may be a different R).
+  status <- withr::with_envvar(
+    c(QUARTO_R = R.home("bin")),
+    withr::with_dir(work, system2(
+      quarto_cli,
+      c("render", "report.qmd", "--to", "typst", "--execute-params", "params.yml"),
+      stdout = log, stderr = log)))
   if (!quiet && file.exists(log)) writeLines(readLines(log))
 
   if (status != 0 || !file.exists(file.path(work, "report.pdf"))) {
@@ -92,4 +97,19 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
 
   file.copy(file.path(work, "report.pdf"), file, overwrite = TRUE)
   invisible(file)
+}
+
+# The Quarto CLI: QUARTO_PATH or the PATH (quarto::quarto_path()), else the
+# newest install in Posit's standard location, /opt/quarto/<version>/bin. A
+# Posit Connect server keeps Quarto there but need not put it on a Shiny
+# app's PATH; this finds it without a server-side setting. A folder that is
+# not a version number is skipped. NULL if none is found.
+find_quarto_cli <- function() {
+  found <- quarto::quarto_path()
+  if (!is.null(found)) return(found)
+  opt <- Sys.glob("/opt/quarto/*/bin/quarto")
+  if (length(opt) == 0) return(NULL)
+  versions <- numeric_version(basename(dirname(dirname(opt))), strict = FALSE)
+  if (all(is.na(versions))) return(NULL)
+  opt[which.max(versions)]
 }
