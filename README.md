@@ -172,6 +172,7 @@ Rscript tests/check_cases.R --pdf --verbose   # ... showing Quarto's output
 | `R/hct_match.R` | Matching logic and report comments |
 | `R/matching_api_client.R` | R client for the matching API |
 | `tests/` | Synthetic test cases and the script that checks them |
+| `DEPLOY.md` | How to deploy the app to Posit Connect |
 
 See [`NEWS.md`](NEWS.md) for the version history and [`TODO.md`](TODO.md) for
 open work.

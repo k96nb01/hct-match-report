@@ -70,9 +70,9 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
   }
   yaml::write_yaml(params, file.path(work, "params.yml"))
   log <- file.path(work, "render.log")
-  # QUARTO_R makes the render's R process the R running this function, so the
-  # report sees the same R and package library (on a server, Rscript on the
-  # PATH may be a different R).
+  # QUARTO_R makes the render run the R that is running this function, even
+  # if the server sets a different QUARTO_R. The package library comes with
+  # it through R_LIBS, which the render inherits.
   status <- withr::with_envvar(
     c(QUARTO_R = R.home("bin")),
     withr::with_dir(work, system2(
@@ -110,6 +110,11 @@ find_quarto_cli <- function() {
   opt <- Sys.glob("/opt/quarto/*/bin/quarto")
   if (length(opt) == 0) return(NULL)
   versions <- numeric_version(basename(dirname(dirname(opt))), strict = FALSE)
-  if (all(is.na(versions))) return(NULL)
-  opt[which.max(versions)]
+  keep <- !is.na(versions)
+  if (!any(keep)) return(NULL)
+  opt <- opt[keep]
+  versions <- versions[keep]
+  # max() and == work on versions in every R; which.max() does not (R 4.5
+  # fails with "'list' object cannot be coerced to type 'double'").
+  opt[versions == max(versions)][1]
 }
