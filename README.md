@@ -4,6 +4,9 @@ A one-page PDF match report for a hematopoietic cell transplantation (HCT)
 recipient and donor, built on the public
 [immunogenetr matching API](https://api.immunogenetr.org/__docs__/).
 
+**Try it at <https://hct-report.immunogenetr.org/>** (no login; synthetic
+example pairs are built in).
+
 Give it two high-resolution HLA typings. It returns:
 
 - the recipient and donor typing at A, B, C, DRB1, DQA1, DQB1, DPA1, and DPB1;
@@ -65,7 +68,8 @@ inputs "Recipient" and "Donor". Do not put identifiers in the typing.
 
 ### The app
 
-From the project folder:
+The app is hosted at <https://hct-report.immunogenetr.org/>. To run it
+locally instead, from the project folder:
 
 ```r
 shiny::runApp()

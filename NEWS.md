@@ -1,4 +1,7 @@
-# hct-match-report 0.2.0 (in development)
+# hct-match-report 0.2.0 (2026-10-12)
+
+- The app is hosted, open to anyone, at
+  <https://hct-report.immunogenetr.org/>.
 
 - DQA1 and DPA1 are shown in the typing table and counted on the Mismatches
   line, at the P group level. They are not part of either match grade.
