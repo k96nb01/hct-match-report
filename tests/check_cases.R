@@ -95,7 +95,6 @@ for (i in seq_along(cases)) {
   if (render) {
     hct_match_report(case$recipient, case$donor, file = sprintf("tests/output/case_%02d.pdf", i),
                      direction = direction, scope = scope,
-                     recipient_label = "Synthetic recipient", donor_label = str_c("Synthetic donor: ", case$name),
                      quiet = !verbose)
   }
 }

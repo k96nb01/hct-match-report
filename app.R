@@ -7,8 +7,8 @@
 # direction (and, for bidirectional, the scope), then press "Generate report"
 # to download the PDF.
 #
-# The optional labels are printed on the report; they are never sent to the
-# matching API or the DPB1 TCE service. Only the typing is sent to the matching
+# There is no field for a name or any other identifier: the report labels the
+# two inputs "Recipient" and "Donor". Only the typing is sent to the matching
 # API (and the DPB1 alleles to the DPB1 TCE service).
 #
 
@@ -29,8 +29,6 @@ typing_inputs <- function(side) {
     column(5, textInput(str_c(side, "_", l, "_2"), NULL))
   ))
   tagList(
-    textInput(str_c(side, "_label"), "Label (printed on the report only)",
-              value = str_to_title(side)),
     rows,
     textAreaInput(str_c(side, "_gl"), "Or paste a GL String (used instead of the boxes)",
                   rows = 3, placeholder = "HLA-A*02:01+HLA-A*24:02^HLA-B*07:02+...")
@@ -51,6 +49,10 @@ ui <- fluidPage(
     "."),
   p(strong("For research use only."),
     " Any clinical use requires independent validation according to local regulations."),
+  p("Questions, problems, or suggestions: ",
+    a("open an issue on GitHub", href = "https://github.com/k96nb01/hct-match-report/issues",
+      target = "_blank", .noWS = "after"),
+    ". Please do not include real patient or donor typing."),
 
   # Top to bottom: the two typings; the options, with the button that uses
   # them; the examples.
@@ -122,8 +124,6 @@ server <- function(input, output, session) {
             recipient       = form_typing("recipient"),
             donor           = form_typing("donor"),
             file            = file,
-            recipient_label = input$recipient_label,
-            donor_label     = input$donor_label,
             direction       = input$direction,
             scope           = input$scope
           ),

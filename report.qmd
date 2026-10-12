@@ -15,9 +15,6 @@ params:
   # by locus). Nothing here identifies a person.
   recipient: "HLA-A*02:01+HLA-A*24:02^HLA-B*07:02+HLA-B*44:02^HLA-C*07:02+HLA-C*05:01^HLA-DRB1*15:01+HLA-DRB1*04:01^HLA-DQB1*06:02+HLA-DQB1*03:02^HLA-DPB1*04:01+HLA-DPB1*02:01"
   donor: "HLA-A*02:09+HLA-A*24:02^HLA-B*07:02+HLA-B*44:02^HLA-C*07:50+HLA-C*05:01^HLA-DRB1*15:01+HLA-DRB1*04:01^HLA-DQB1*06:02+HLA-DQB1*03:02^HLA-DPB1*04:01+HLA-DPB1*02:01"
-  # Printed on the report only; never sent to either service.
-  recipient_label: "Recipient"
-  donor_label: "Donor"
   # Match direction ("bidirectional", "GvH", or "HvG") and, for bidirectional,
   # scope ("locus" or "genotype"). See R/hct_match.R.
   direction: "bidirectional"
@@ -52,7 +49,7 @@ tt_pad <- function(x = 5, y = 2) {
   }
 }
 
-# Text that goes into raw Typst blocks (the labels and the versions): escape everything Typst
+# Text that goes into raw Typst blocks (the versions): escape everything Typst
 # could read as markup, so a label cannot break the compile.
 typst_text <- function(x) str_replace_all(replace_na(x, ""), "([\\\\#$*_`<>@\\[\\]=~/\"+-])", "\\\\\\1")
 ```
@@ -124,8 +121,8 @@ mismatch_row <- function() {
 }
 
 typing_data <- bind_rows(
-  typing_rows(recipient, params$recipient_label),
-  typing_rows(donor, params$donor_label),
+  typing_rows(recipient, "Recipient"),
+  typing_rows(donor, "Donor"),
   mismatch_row()
 )
 
@@ -166,8 +163,6 @@ scope_text <- if (match$direction != "bidirectional") "" else switch(match$scope
 ])
 #align(center)[#text(14pt)[*HCT Donor Match Report*]]
 #v(4pt)
-*Recipient:* `r typst_text(params$recipient_label)` #h(2em) *Donor:* `r typst_text(params$donor_label)`
-#v(6pt)
 #align(center)[#text(size: 11pt, weight: "bold")[Typing]]
 ```
 
@@ -201,7 +196,7 @@ tt(typing_data, width = c(.13, rep(.87 / 8, 8))) |>
 # each "^" and "+" lets Typst wrap it; it prints as nothing.
 reduced <- hct_reduced_gl(match)
 wrap_gl <- function(gl) if (is.na(gl)) "No locus was compared." else str_replace_all(gl, "([\\^+])", "\\1\u200b")
-tibble(Person = c(params$recipient_label, params$donor_label),
+tibble(Person = c("Recipient", "Donor"),
        Genotype = c(wrap_gl(reduced$recipient), wrap_gl(reduced$donor))) |>
   tt(width = c(.22, .78), colnames = FALSE) |>
   format_tt(escape = TRUE) |>

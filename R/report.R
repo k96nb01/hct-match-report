@@ -9,8 +9,8 @@
 #   )
 #
 # Each typing is a GL String or a named list by locus (see read_typing() in
-# R/hct_match.R). `recipient_label` and `donor_label` are printed on the report
-# only; they are never sent anywhere. `direction` is "bidirectional" (the
+# R/hct_match.R). The report labels the two inputs "Recipient" and "Donor";
+# there is no argument for a name. `direction` is "bidirectional" (the
 # default), "GvH", or "HvG"; `scope`, which only affects a bidirectional match
 # grade, is "locus" (the default) or "genotype" (see R/hct_match.R).
 # `quiet = FALSE` shows Quarto's output.
@@ -24,7 +24,6 @@ suppressPackageStartupMessages({
 })
 
 hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
-                             recipient_label = "Recipient", donor_label = "Donor",
                              direction = c("bidirectional", "GvH", "HvG"),
                              scope = c("locus", "genotype"),
                              api_host = "https://api.immunogenetr.org", quiet = TRUE) {
@@ -46,8 +45,6 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
   params <- list(
     recipient       = as_gl(recipient),
     donor           = as_gl(donor),
-    recipient_label = recipient_label,
-    donor_label     = donor_label,
     direction       = direction,
     scope           = scope,
     api_host        = api_host
@@ -73,9 +70,10 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
   yaml::write_yaml(params, file.path(work, "params.yml"))
   log <- file.path(work, "render.log")
   # QUARTO_R makes the render run the R that is running this function, even
-  # if the server sets a different QUARTO_R. The package library comes with
-  # it through R_LIBS, which the render inherits. QUARTO_PATH lets R code in
-  # the render find the same Quarto CLI: tinytable calls
+  # if the server sets a different QUARTO_R. The render inherits the package
+  # library through the environment: renv sets R_LIBS_USER to the project
+  # library, and Posit Connect sets R_LIBS to the bundle's. QUARTO_PATH lets
+  # R code in the render find the same Quarto CLI: tinytable calls
   # quarto::quarto_version(), which looks only at QUARTO_PATH and the PATH.
   status <- withr::with_envvar(
     c(QUARTO_R = R.home("bin"), QUARTO_PATH = quarto_cli),
