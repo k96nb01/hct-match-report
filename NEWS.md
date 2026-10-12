@@ -25,6 +25,9 @@
 - `hct_match_report()` finds the Quarto CLI in Posit's standard location
   (`/opt/quarto/<version>/bin`) when it is not on the PATH, as on a Posit
   Connect server, and renders with the R that is running it.
+- The report's font, Liberation Sans (metrically identical to Arial), ships
+  in `fonts/`, so the PDF looks the same on every machine. A server without
+  Arial previously fell back to a much wider font.
 - `tests/cases.R` now checks the X/8 grades, the DQA1 and DPA1 cells, and the
   examples under every direction and scope (25 cases).
 

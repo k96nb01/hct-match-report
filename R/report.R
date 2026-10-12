@@ -58,8 +58,10 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
   work <- tempfile("hct_report_")
   on.exit(unlink(work, recursive = TRUE), add = TRUE)
   dir.create(file.path(work, "R"), recursive = TRUE)
+  dir.create(file.path(work, "fonts"))
   file.copy(file.path(root, "report.qmd"), work)
   file.copy(list.files(file.path(root, "R"), full.names = TRUE), file.path(work, "R"))
+  file.copy(list.files(file.path(root, "fonts"), full.names = TRUE), file.path(work, "fonts"))
 
   # Run the Quarto CLI directly, with its whole output kept in a log, so a
   # failed render can always say why. The parameters go in a YAML file, which
