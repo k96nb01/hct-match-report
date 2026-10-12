@@ -17,12 +17,25 @@ In a terminal, from the project folder:
 git switch main
 git pull
 git status                          # should be clean
+```
+
+Then, in the R console, bring the project library to the versions in
+`renv.lock` (a host upgrade can empty it):
+
+```r
+renv::restore()
+renv::status()   # expect "No issues found"
+```
+
+and run the tests in the terminal:
+
+```sh
 Rscript tests/check_cases.R --pdf   # expect "All checks passed."
 ```
 
-There is no renv lockfile yet, so the server installs the package versions
-of your Workbench library. Update packages, if at all, before running the
-tests; never between the tests and the deploy.
+The server installs the package versions in `renv.lock`. To update a
+package, `renv::update()` it, run the tests, and commit the new lockfile
+through a pull request before deploying.
 
 ## 2. Deploy
 
@@ -36,7 +49,7 @@ server <- "<staging or production server>"
 rsconnect::deployApp(
   appDir   = ".",
   appFiles = c("app.R", "report.qmd", "R/examples.R", "R/hct_match.R",
-               "R/matching_api_client.R", "R/report.R",
+               "R/matching_api_client.R", "R/report.R", "renv.lock",
                list.files("fonts", full.names = TRUE)),
   appName  = "hct-match-report",
   appTitle = "HCT donor match report",
@@ -47,6 +60,8 @@ rsconnect::deployApp(
 
 `appFiles` lists the app's files explicitly, so `tests/` and the
 documentation stay out of the bundle. Add any new file the app needs here.
+`renv.lock` must be in the bundle: rsconnect reads the package versions
+from it.
 The deploy records in `rsconnect/` (not committed) tie this clone to the
 content on each server. From a clone without them, rsconnect looks for
 content named `hct-match-report` owned by `account` and may ask whether to
