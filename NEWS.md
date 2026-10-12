@@ -22,6 +22,9 @@
 - The app offers three synthetic example pairs (`R/examples.R`) that fill the
   GL String boxes, one of which shows how direction and scope change the
   grade.
+- `hct_match_report()` finds the Quarto CLI in Posit's standard location
+  (`/opt/quarto/<version>/bin`) when it is not on the PATH, as on a Posit
+  Connect server, and renders with the R that is running it.
 - `tests/cases.R` now checks the X/8 grades, the DQA1 and DPA1 cells, and the
   examples under every direction and scope (25 cases).
 
