@@ -72,9 +72,11 @@ hct_match_report <- function(recipient, donor, file = "hct_match_report.pdf",
   log <- file.path(work, "render.log")
   # QUARTO_R makes the render run the R that is running this function, even
   # if the server sets a different QUARTO_R. The package library comes with
-  # it through R_LIBS, which the render inherits.
+  # it through R_LIBS, which the render inherits. QUARTO_PATH lets R code in
+  # the render find the same Quarto CLI: tinytable calls
+  # quarto::quarto_version(), which looks only at QUARTO_PATH and the PATH.
   status <- withr::with_envvar(
-    c(QUARTO_R = R.home("bin")),
+    c(QUARTO_R = R.home("bin"), QUARTO_PATH = quarto_cli),
     withr::with_dir(work, system2(
       quarto_cli,
       c("render", "report.qmd", "--to", "typst", "--execute-params", "params.yml"),
