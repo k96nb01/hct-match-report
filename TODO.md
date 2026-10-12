@@ -2,22 +2,21 @@
 
 Status 2026-10-12: 0.2.0 is on `main`; NEWS still marks it "in development".
 All 25 synthetic cases and the offline typing checks pass against the live
-API. Hosting is untested since Quarto was installed on the servers (below).
+API, on the desktop and on Workbench. The app has not been redeployed since
+Quarto was installed on the servers (below).
 
 ## Next
 
 - **Host the app on a Posit Connect server, open to all** (decided
   2026-10-07). This repo stays the one public source and is deployed from
   directly; deployment records (`rsconnect/`) are not committed.
-  - **Test on Workbench:** pull `main`, check `find_quarto_cli()` finds
-    Quarto, and run `tests/check_cases.R --pdf`.
-  - **Redeploy to staging** listing `app.R`, `report.qmd`, and the four
-    files in `R/` (so `tests/` stays out of the bundle), and render each
-    example in the app. If Quarto is not found there, find its path on the
-    server and adjust `find_quarto_cli()`.
+  - **Redeploy to staging** following `DEPLOY.md`, and render each example
+    in the app. If Quarto is not found there, find its path on the server
+    and adjust `find_quarto_cli()`.
   - Confirm the server can reach `api.immunogenetr.org` and `www.ebi.ac.uk`
     (the first render there will show this).
   - Add an renv lockfile.
+  - Once staging works, deploy to production (`DEPLOY.md`), open to anyone.
   - Link the hosted app from this README.
 
 ## Later
