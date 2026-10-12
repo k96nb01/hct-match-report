@@ -7,7 +7,6 @@
 # What leaves this machine: GL Strings for one recipient/donor pair, the locus
 # names, and the matching options go to the matching API; four DPB1 allele
 # names go to the DPB1 T-cell epitope (TCE) service when DPB1 is mismatched.
-# The optional recipient and donor labels never leave the machine.
 
 # The loci of each match grade, in the order the report prints the grades.
 # (The names are the matching API's match_grade values.)

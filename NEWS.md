@@ -30,6 +30,10 @@
   Arial previously fell back to a much wider font.
 - The project uses renv; `renv.lock` records the package versions the app
   is tested and deployed with.
+- The app links to the GitHub issues page for questions and problems.
+- The recipient and donor labels are removed, from the app and from
+  `hct_match_report()`: the report labels the two inputs "Recipient" and
+  "Donor", so there is nowhere to enter a name.
 - `tests/cases.R` now checks the X/8 grades, the DQA1 and DPA1 cells, and the
   examples under every direction and scope (25 cases).
 

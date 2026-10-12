@@ -39,8 +39,8 @@ Give it two high-resolution HLA typings. It returns:
 Only typing leaves your machine. The matching API receives GL Strings, the
 locus names, and the matching options. The IPD-IMGT/HLA DPB1 TCE service at
 EBI receives the four DPB1 allele names, and only when DPB1 is mismatched.
-The optional recipient and donor labels are printed on the PDF and never sent
-anywhere. Do not put identifiers in the typing.
+The report has no field for a name or any other identifier: it labels the two
+inputs "Recipient" and "Donor". Do not put identifiers in the typing.
 
 ## Requirements
 
@@ -99,8 +99,7 @@ and DPB1 is a non-permissive mismatch. The grades are 9/10 and 7/8 at the P
 group level, and 7/10 and 6/8 by two-field allele name. DQA1 and DPA1 are not
 typed here, so they print `NC`.
 
-Other arguments: `recipient_label` and `donor_label` (printed on the report
-only), `direction` (`"bidirectional"`, `"GvH"`, or `"HvG"`), `scope`
+Other arguments: `direction` (`"bidirectional"`, `"GvH"`, or `"HvG"`), `scope`
 (`"locus"` or `"genotype"`; bidirectional only), `api_host` (another
 deployment of the matching API), and `quiet = FALSE` to see Quarto's output.
 
