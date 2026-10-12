@@ -2,6 +2,9 @@
 format:
   typst:
     fontsize: 10pt
+    # The report's font ships with it (fonts/), so the PDF looks the same on
+    # every machine, whatever fonts are installed.
+    font-paths: fonts
     margin:
       x: 0.9in
       y: 0.9in
@@ -148,9 +151,10 @@ scope_text <- if (match$direction != "bidirectional") "" else switch(match$scope
 ```
 
 ```{=typst}
-// A sans-serif font that is likely to be installed; Typst falls back to its
-// own font when none of these is present.
-#set text(font: ("Arial", "Helvetica", "Liberation Sans", "DejaVu Sans"))
+// Liberation Sans, in fonts/ (metrically identical to Arial). Without it, a
+// server falls back to whatever is installed (DejaVu Sans on a Posit Connect
+// server, much wider at the same size).
+#set text(font: "Liberation Sans")
 // No hyphenation or justification: they split and stretch labels in table cells.
 #set text(hyphenate: false)
 #set par(justify: false)

@@ -36,7 +36,8 @@ server <- "<staging or production server>"
 rsconnect::deployApp(
   appDir   = ".",
   appFiles = c("app.R", "report.qmd", "R/examples.R", "R/hct_match.R",
-               "R/matching_api_client.R", "R/report.R"),
+               "R/matching_api_client.R", "R/report.R",
+               list.files("fonts", full.names = TRUE)),
   appName  = "hct-match-report",
   appTitle = "HCT donor match report",
   server   = server,
