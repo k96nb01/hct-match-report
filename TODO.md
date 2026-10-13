@@ -1,16 +1,12 @@
 # Open work
 
-Status 2026-10-12: 0.2.0 is released and hosted at
+Status 2026-10-13: 0.2.0 is released and hosted at
 <https://hct-report.immunogenetr.org/> (the production Connect content,
 through a Cloudflare Worker that lives with the matching API's proxy, not in
 this public repo). All 25 synthetic cases and the offline typing checks
-pass against the live API, on the desktop and on Workbench.
-
-## Next
-
-- Finish the smoke test of the hosted app: leave it idle for more than 5
-  minutes and generate another report, and use it once from a phone on a
-  cellular network.
+pass against the live API, on the desktop and on Workbench. The smoke test
+of the hosted app is done, including a report after more than 5 minutes
+idle and use from a phone on a cellular network. Nothing is in progress.
 
 ## Later
 
