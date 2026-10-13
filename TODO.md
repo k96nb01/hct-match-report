@@ -11,15 +11,16 @@ pass against the live API, on the desktop and on Workbench.
 - Finish the smoke test of the hosted app: leave it idle for more than 5
   minutes and generate another report, and use it once from a phone on a
   cellular network.
-- **Quarto for R content on the servers:** the server administrators are
-  looking for a lasting way to let R content that runs Quarto itself find
-  it: a stable location on the PATH Connect passes to content, or a program
-  supervisor (`Applications.Supervisor`) that sets `QUARTO_PATH` for all
-  content. A small diagnostic app on staging shows when it works. The app
-  does not need this (`find_quarto_cli()` and `QUARTO_PATH` in
-  `R/report.R`); once it is done, nothing here changes.
 
 ## Later
+
+- **Quarto fallback in `R/report.R`:** since 2026-10-13 production Connect
+  puts Quarto on the PATH it passes to content (a symlink, confirmed by the
+  diagnostic app), so `find_quarto_cli()` now finds it through
+  `quarto::quarto_path()` and the `/opt/quarto` search is unused there. The
+  administrators have not yet chosen between the symlink and a program
+  supervisor that sets `QUARTO_PATH`; either works with the app unchanged.
+  Keep the fallback until they settle it, then decide whether to remove it.
 
 - Recopy `R/matching_api_client.R` from the matching API's client once it
   says "GL String" (capital S) too; it is the one file here that still says
